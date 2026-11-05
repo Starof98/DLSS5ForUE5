@@ -1,9 +1,9 @@
 {
     "FileVersion": 3,
-    "Version": 601,
-    "VersionName": "0.6.1 Validation Build",
+    "Version": 602,
+    "VersionName": "0.6.2 MRQ",
     "FriendlyName": "DLSS 5 for UE5",
-    "Description": "Unofficial UE5 D3D12 integration for NVIDIA DLSS 3D-Guided Neural Rendering. Dedicated editor UI, scene guides, isolated temporal history per view/pass, GPU-safe feature lifetime handling, 1-4 sequential Neural Rendering passes, diagnostics, and safe-mode recovery.",
+    "Description": "Independent UE5 D3D12 integration for NVIDIA Neural Rendering. Viewport controls and integrated Movie Render Queue output with frame-aligned depth/motion guides. Local distribution based on Praveen Kumar v0.6.1.",
     "Category": "Rendering",
     "CreatedBy": "Praveen Kumar",
     "CanContainContent": false,
@@ -28,5 +28,11 @@
     "EnabledByDefault": true,
     "CreatedByURL": "https://github.com/praveenkumarappu",
     "DocsURL": "https://github.com/praveenkumarappu/DLSS5ForUE5",
-    "SupportURL": "https://discord.com/invite/UFsuT4w"
+    "SupportURL": "https://discord.com/invite/UFsuT4w",
+    "Plugins": [
+        {
+            "Name": "MovieRenderPipeline",
+            "Enabled": true
+        }
+    ]
 }

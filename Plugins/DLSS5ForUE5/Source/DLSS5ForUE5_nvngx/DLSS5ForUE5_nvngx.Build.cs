@@ -21,7 +21,10 @@ public class DLSS5ForUE5_nvngx : ModuleRules
         {
             "Core",
             "CoreUObject",
-            "Engine"
+            "Engine",
+            "MovieRenderPipelineCore",
+            "MovieRenderPipelineRenderPasses",
+            "ImageWriteQueue"
         });
 
         PrivateDependencyModuleNames.AddRange(new string[]

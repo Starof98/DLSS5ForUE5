@@ -1,0 +1,68 @@
+#include "/Engine/Public/Platform.ush"
+#include "/Engine/Private/Common.ush"
+#include "/DLSS5NR/Private/DLSS5NRMotionCommon.ush"
+Texture2D<float> SourceDepth;
+Texture2D<float4> SourceVelocity;
+int2 SourceMin;
+int2 SourceSize;
+int2 OutputSize;
+float2 ProjectionJitter;
+float4x4 OutputClipToPrevious;
+float4x4 EngineClipToPrevious;
+uint UseEngineVelocity;
+uint ResetMotion;
+RWTexture2D<float> GuideDepth;
+RWTexture2D<float2> GuideMotion;
+
+[numthreads(8,8,1)]
+void MRQGuidesCS(uint3 ID : SV_DispatchThreadID)
+{
+    if(any(ID.xy >= uint2(OutputSize))) return;
+    float2 UV = (float2(ID.xy)+0.5f)/float2(OutputSize);
+    // Projection jitter moves clip coordinates; sample depth/velocity at that position.
+    float2 SampleUV = UV + ProjectionJitter*float2(0.5f,-0.5f);
+    int2 P = SourceMin + clamp(int2(floor(SampleUV*SourceSize)), int2(0,0), SourceSize-1);
+    float Depth = SourceDepth.Load(int3(P,0));
+    float2 XY = UV*float2(2,-2)+float2(-1,1);
+    float2 CameraVelocity = DLSS5NRCameraVelocity(XY,Depth,OutputClipToPrevious);
+    float2 Velocity = CameraVelocity;
+    if(UseEngineVelocity != 0)
+    {
+        float4 Encoded = SourceVelocity.Load(int3(P,0));
+        if(Encoded.x > 0)
+        {
+            // Replace the engine's camera component with explicit output-frame reprojection.
+            // Object residual is experimental and requires TemporalSampleCount=1.
+            float2 EngineCamera = DLSS5NRCameraVelocity(XY,Depth,EngineClipToPrevious);
+            Velocity += DecodeVelocityFromTexture(Encoded).xy - EngineCamera;
+        }
+    }
+    GuideDepth[ID.xy] = isfinite(Depth) ? clamp(Depth,0,1) : 0;
+    float2 Pixels = DLSS5NRToPixelMotion(Velocity,float2(OutputSize));
+    GuideMotion[ID.xy] = ResetMotion != 0 || !all(isfinite(Pixels)) ? float2(0,0) : Pixels;
+}
+
+// Synthetic inputs for an automation test that dispatches the actual guide shader.
+RWTexture2D<float> TestDepth;
+RWTexture2D<float4> TestVelocity;
+[numthreads(8,8,1)]
+void SeedMRQGuidesTestCS(uint3 ID : SV_DispatchThreadID)
+{
+    if(any(ID.xy >= uint2(8,8))) return;
+    TestDepth[ID.xy]=(float(ID.x)+0.5f)/8.0f;
+    TestVelocity[ID.xy]=EncodeVelocityToTexture(float3(0.1f,-0.2f,0));
+}
+
+Texture2D<float> StatsDepth;
+Texture2D<float2> StatsMotion;
+RWStructuredBuffer<float4> GuideStatistics;
+[numthreads(8,8,1)]
+void MRQGuideStatisticsCS(uint3 ID : SV_DispatchThreadID)
+{
+    if(any(ID.xy>=uint2(16,16))) return;
+    uint2 P=min(uint2((float2(ID.xy)+0.5f)*float2(OutputSize)/16.0f),uint2(OutputSize)-1);
+    float2 UV=(float2(P)+0.5f)/float2(OutputSize)+ProjectionJitter*float2(0.5f,-0.5f);
+    int2 SP=SourceMin+clamp(int2(floor(UV*SourceSize)),int2(0,0),SourceSize-1);
+    float Valid=UseEngineVelocity!=0 && SourceVelocity.Load(int3(SP,0)).x>0 ? 1 : 0;
+    GuideStatistics[ID.y*16+ID.x]=float4(StatsDepth.Load(int3(P,0)),StatsMotion.Load(int3(P,0)),Valid);
+}

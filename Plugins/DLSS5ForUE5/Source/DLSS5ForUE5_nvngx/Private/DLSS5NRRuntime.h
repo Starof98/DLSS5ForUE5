@@ -13,6 +13,7 @@ struct FDLSS5NREvaluateDesc
 {
     uint64 HistoryKey = 0; // Stable view-state key plus sequential pass index.
     uint64 FrameNumber = 0;
+    bool bOfflineFinalFrame = false; // Output stream owns resets; render frame still governs GPU lifetime.
     FGPUFenceRHIRef CompletionFence;
     ID3D12GraphicsCommandList* CommandList = nullptr;
     ID3D12Resource* Color = nullptr;

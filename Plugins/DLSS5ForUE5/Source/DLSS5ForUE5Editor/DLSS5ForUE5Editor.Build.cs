@@ -22,7 +22,13 @@ public class DLSS5ForUE5Editor : ModuleRules
             "SlateCore",
             "ToolMenus",
             "PropertyEditor",
-            "LevelEditor"
+            "LevelEditor",
+            "MovieRenderPipelineCore",
+            "MovieRenderPipelineSettings",
+            "MovieRenderPipelineRenderPasses",
+            "AssetTools",
+            "AssetRegistry",
+            "ContentBrowser"
         });
     }
 }

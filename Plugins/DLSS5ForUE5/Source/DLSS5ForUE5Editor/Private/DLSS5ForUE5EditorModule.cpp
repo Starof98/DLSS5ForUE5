@@ -2,6 +2,7 @@
 #include "DLSS5ForUE5Module.h"
 
 #include "DLSS5NRSettings.h"
+#include "DLSS5NRPresetLibrary.h"
 
 #include "DetailCategoryBuilder.h"
 #include "DetailLayoutBuilder.h"
@@ -27,7 +28,7 @@
 namespace
 {
     const FName DLSS5ForUE5TabName(TEXT("DLSS5ForUE5"));
-    const TCHAR* DLSS5BuildStamp = TEXT("2026-10-27");
+    const TCHAR* DLSS5BuildStamp = TEXT("2026-11-03");
 
     int32 GetPassCount()
     {
@@ -179,6 +180,14 @@ void FDLSS5ForUE5EditorModule::RegisterMenus()
 
     UToolMenu* ToolsMenu = UToolMenus::Get()->ExtendMenu(TEXT("LevelEditor.MainMenu.Tools"));
     FToolMenuSection& Section = ToolsMenu->FindOrAddSection(TEXT("DLSS5ForUE5"));
+    Section.AddMenuEntry(TEXT("CreateNRPathTracingPreset"),
+        LOCTEXT("CreateNRPathTracingPreset", "DLSS5 NR - Create Path Tracing Preset"),
+        LOCTEXT("CreateNRPathTracingPresetTip", "Create a new MRQ preset with compatible guides, output and console variables."),
+        FSlateIcon(), FUIAction(FExecuteAction::CreateLambda([](){ UDLSS5NRPresetLibrary::CreateMRQPreset(true); })));
+    Section.AddMenuEntry(TEXT("CreateNRDeferredPreset"),
+        LOCTEXT("CreateNRDeferredPreset", "DLSS5 NR - Create Deferred Preset"),
+        LOCTEXT("CreateNRDeferredPresetTip", "Create a new MRQ preset with compatible guides, output and console variables."),
+        FSlateIcon(), FUIAction(FExecuteAction::CreateLambda([](){ UDLSS5NRPresetLibrary::CreateMRQPreset(false); })));
     Section.AddMenuEntry(
         TEXT("OpenDLSS5ForUE5"),
         LOCTEXT("OpenWindow", "DLSS 5 for UE5"),

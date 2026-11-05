@@ -4,6 +4,7 @@
 #include "DLSS5NRCVars.h"
 #include "DLSS5NRMotionVectorPass.h"
 #include "DLSS5NRRuntime.h"
+#include "DLSS5NRMoviePipelineBridge.h"
 
 #include "RenderGraphBuilder.h"
 #include "RenderGraphResources.h"
@@ -130,6 +131,12 @@ void FDLSS5NRViewExtension::SubscribeToPostProcessingPass(
         return;
     }
 
+    // The final-output setting owns offline NR. Never process individual MRQ samples too.
+    if (InView.bIsOfflineRender && DLSS5NRMRQ::IsFinalFrameRouteActive())
+    {
+        return;
+    }
+
     // Tonemap remains the v0.4 insertion point: temporal upscaling / DLSS has already produced
     // the current color path, while Slate UI is still downstream. Scene depth/velocity remain
     // available through FPostProcessMaterialInputs::SceneTextures.
@@ -166,6 +173,7 @@ FScreenPassTexture FDLSS5NRViewExtension::AfterTonemap_RenderThread(
         return SceneColor;
     }
 
+    if (View.bIsOfflineRender && DLSS5NRMRQ::IsFinalFrameRouteActive()) return SceneColor;
     const FIntRect ColorRect = SceneColor.ViewRect;
     if (ColorRect.Width() <= 0 || ColorRect.Height() <= 0)
     {

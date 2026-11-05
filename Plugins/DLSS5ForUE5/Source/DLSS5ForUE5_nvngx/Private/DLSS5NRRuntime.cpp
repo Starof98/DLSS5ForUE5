@@ -387,6 +387,18 @@ FDLSS5NRRuntime::FFeatureState* FDLSS5NRRuntime::CreateFeature(const FDLSS5NREva
     bParametersHadDepth = bUseDepth;
     bParametersHadMotion = bUseMotion;
 
+    // Final-frame NR must see the current control values at creation too, as in NRStudio.
+    // Otherwise a new view/pass can inherit values left in the shared parameter block.
+    if (D.bOfflineFinalFrame)
+    {
+        P->Set("DLSSNR.Intensity", D.Intensity);
+        P->Set("DLSSNR.LocalToneStrength", D.LocalTone);
+        P->Set("DLSSNR.LocalStructureStrength", D.LocalStructure);
+        P->Set("DLSSNR.SkinStructureStrength", D.SkinStructure);
+        P->Set("DLSSNR.UseAutoMask", D.bAutoMask ? 1 : 0);
+        P->Set("DLSSNR.Style", D.Style);
+        P->Set("DLSSNR.UICorrection", D.bUICorrection ? 1 : 0);
+    }
     FNGXHandle* NewHandle = nullptr;
     const FNGXResult Result = CreateFeatureFn(D.CommandList, DLSS5NRNGX::NeuralRenderingFeature, P, &NewHandle);
     DLSS5NRWriteInitDiagnostic(TEXT("AfterCreateFeature"), InitializedDevice, CoreParameters, RuntimePath, CallerModulePath, GetApplicationId ? GetApplicationId() : 0, GetAPIVersion ? GetAPIVersion() : 0, Result);
@@ -467,7 +479,7 @@ bool FDLSS5NRRuntime::Evaluate(const FDLSS5NREvaluateDesc& D)
         return false;
     }
     const bool bReset = D.bReset || Feature->bNeedsReset ||
-        D.FrameNumber > Feature->LastFrame + 1;
+        (!D.bOfflineFinalFrame && D.FrameNumber > Feature->LastFrame + 1);
     Feature->LastFrame = D.FrameNumber;
     Feature->CompletionFence = D.CompletionFence;
     {
